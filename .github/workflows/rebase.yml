@@ -27,6 +27,8 @@ jobs:
 
       - name: Rebase all feature branches onto develop
         run: |
+          conflict_found=false
+
           for branch in $(git branch -r | grep 'origin/feature/' | sed 's|origin/||'); do
             echo "🔄 Rebasing $branch onto develop..."
             git checkout $branch
@@ -35,14 +37,16 @@ jobs:
               echo "🔍 Conflicted files:"
               git diff --name-only --diff-filter=U
               git rebase --abort
-              continue
+              conflict_found=true
+              # conflict 발생 시 루프는 계속 돌지만, 전체 워크플로는 실패로 표시됨
+            else
+              git push --force-with-lease origin $branch
             fi
-            git push --force-with-lease origin $branch
           done
 
           if [ "$conflict_found" = true ]; then
-            echo "conflict=true" >> $GITHUB_OUTPUT
-            exit 1  # ❗ 워크플로 실패로 표시
+            echo "❌ One or more branches failed to rebase. Marking workflow as failed."
+            exit 1  # ❗ 전체 워크플로 실패로 표시
           else
-            echo "conflict=false" >> $GITHUB_OUTPUT
+            echo "✅ All feature branches successfully rebased onto develop."
           fi
