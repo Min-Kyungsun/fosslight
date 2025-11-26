@@ -36,9 +36,18 @@ jobs:
               echo "❌ Rebase conflict detected in $branch"
               echo "🔍 Conflicted files:"
               git diff --name-only --diff-filter=U
+
+              echo ""
+              echo "🧩 Conflict details:"
+              # 각 충돌 파일의 실제 diff 내용 출력
+              for file in $(git diff --name-only --diff-filter=U); do
+                echo "----- $file -----"
+                git diff $file
+                echo ""
+              done
+
               git rebase --abort
               conflict_found=true
-              # conflict 발생 시 루프는 계속 돌지만, 전체 워크플로는 실패로 표시됨
             else
               git push --force-with-lease origin $branch
             fi
@@ -46,7 +55,7 @@ jobs:
 
           if [ "$conflict_found" = true ]; then
             echo "❌ One or more branches failed to rebase. Marking workflow as failed."
-            exit 1  # ❗ 전체 워크플로 실패로 표시
+            exit 1
           else
             echo "✅ All feature branches successfully rebased onto develop."
           fi
