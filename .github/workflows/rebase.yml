@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 모든 브랜치와 히스토리를 가져와야 rebase 가능
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
@@ -28,12 +28,14 @@ jobs:
       - name: Rebase all feature branches onto develop
         run: |
           for branch in $(git branch -r | grep 'origin/feature/' | sed 's|origin/||'); do
-            echo "Rebasing $branch onto develop..."
+            echo "🔄 Rebasing $branch onto develop..."
             git checkout $branch
-            git rebase origin/develop || {
-              echo "Rebase failed on $branch, aborting and skipping..."
+            if ! git rebase origin/develop; then
+              echo "❌ Rebase conflict detected in $branch"
+              echo "🔍 Conflicted files:"
+              git diff --name-only --diff-filter=U
               git rebase --abort
               continue
-            }
+            fi
             git push --force-with-lease origin $branch
           done
