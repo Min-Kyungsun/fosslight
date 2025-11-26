@@ -39,3 +39,10 @@ jobs:
             fi
             git push --force-with-lease origin $branch
           done
+
+          if [ "$conflict_found" = true ]; then
+            echo "conflict=true" >> $GITHUB_OUTPUT
+            exit 1  # ❗ 워크플로 실패로 표시
+          else
+            echo "conflict=false" >> $GITHUB_OUTPUT
+          fi
